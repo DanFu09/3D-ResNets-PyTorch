@@ -58,21 +58,23 @@ if __name__ == '__main__':
         norm_method = Normalize(opt.mean, opt.std)
 
     if not opt.no_train:
-        assert opt.train_crop in ['random', 'corner', 'center']
-        if opt.train_crop == 'random':
-            crop_method = MultiScaleRandomCrop(opt.scales, opt.sample_size)
-        elif opt.train_crop == 'corner':
-            crop_method = MultiScaleCornerCrop(opt.scales, opt.sample_size)
-        elif opt.train_crop == 'center':
-            crop_method = MultiScaleCornerCrop(
-                opt.scales, opt.sample_size, crop_positions=['c'])
+#         assert opt.train_crop in ['random', 'corner', 'center']
+#         if opt.train_crop == 'random':
+#             crop_method = MultiScaleRandomCrop(opt.scales, opt.sample_size)
+#         elif opt.train_crop == 'corner':
+#             crop_method = MultiScaleCornerCrop(opt.scales, opt.sample_size)
+#         elif opt.train_crop == 'center':
+#             crop_method = MultiScaleCornerCrop(
+#                 opt.scales, opt.sample_size, crop_positions=['c'])
         spatial_transform = Compose([
-            crop_method,
+            Scale((opt.sample_size, opt.sample_size)),
             RandomHorizontalFlip(),
             ToTensor(opt.norm_value), norm_method
         ])
-        temporal_transform = TemporalRandomCrop(opt.sample_duration)
-        target_transform = ClassLabel()
+#         temporal_transform = TemporalRandomCrop(opt.sample_duration)
+        temporal_transform = None
+#         target_transform = ClassLabel()
+        target_transform = None
         training_data = get_training_set(opt, spatial_transform,
                                          temporal_transform, target_transform)
         train_loader = torch.utils.data.DataLoader(
@@ -103,12 +105,14 @@ if __name__ == '__main__':
             optimizer, 'min', patience=opt.lr_patience)
     if not opt.no_val:
         spatial_transform = Compose([
-            Scale(opt.sample_size),
+            Scale((opt.sample_size, opt.sample_size)),
             CenterCrop(opt.sample_size),
             ToTensor(opt.norm_value), norm_method
         ])
-        temporal_transform = LoopPadding(opt.sample_duration)
-        target_transform = ClassLabel()
+#         temporal_transform = LoopPadding(opt.sample_duration)
+        temporal_transform = None
+#         target_transform = ClassLabel()
+        target_transform = None
         validation_data = get_validation_set(
             opt, spatial_transform, temporal_transform, target_transform)
         val_loader = torch.utils.data.DataLoader(
@@ -144,12 +148,14 @@ if __name__ == '__main__':
 
     if opt.test:
         spatial_transform = Compose([
-            Scale(int(opt.sample_size / opt.scale_in_test)),
+            Scale((opt.sample_size, opt.sample_size)),
             CornerCrop(opt.sample_size, opt.crop_position_in_test),
             ToTensor(opt.norm_value), norm_method
         ])
-        temporal_transform = LoopPadding(opt.sample_duration)
-        target_transform = VideoID()
+#         temporal_transform = LoopPadding(opt.sample_duration)
+        temporal_transform = None
+        target_transform = ClassLabel()
+        target_transform = None
 
         test_data = get_test_set(opt, spatial_transform, temporal_transform,
                                  target_transform)
