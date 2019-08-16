@@ -49,7 +49,6 @@ def get_default_video_loader():
     image_loader = get_default_image_loader()
     return functools.partial(video_loader, image_loader=image_loader)
 
-
 def make_dataset(video_path, annotation_path, dataset, sample_duration):
     """
     Args:
@@ -62,57 +61,55 @@ def make_dataset(video_path, annotation_path, dataset, sample_duration):
         data (list): List of {video_path, image_list, class_index} dicts of (string, list, int).
         class_names (dict): Dict with items (class_name, class_index).
     """
-    with open(annotation_path, 'rb') as f:
-        annotations = pickle.load(f)
-    if dataset == 'val':
-        class_indices = {
-            'long_val': 0,
-            'medium_val': 1,
-            'close_up_val': 2
-        }
-    elif dataset == 'test':
-        class_indices = {
-            'long_test': 0,
-            'medium_test': 1,
-            'close_up_test': 2
-        }
+    annotations = []
+    with open(os.path.join(annotation_path, '{}.txt'.format(dataset)), 'r') as f:
+        for line in f.readlines():
+            video, image, label = line.split(' ')
+            annotations.append((video, image, label))
     
-    def generate_image_list(segment_start, segment_end, sample_duration):
-        # regularly sample images from the segment
-        sample_duration = int(sample_duration)
-        increment = int((segment_end - segment_start + 1) / sample_duration)
-        if increment == 0:
-            # use all images, duplicate images at the end
-            return ([
-                '{}.jpg'.format(i)
-                for i in range(segment_start, segment_end + 1)
-            ] + [ '{}.jpg'.format(segment_end) for i in range(sample_duration - (segment_end - segment_start + 1)) ])[:sample_duration]
-        else:
-            # iterate through with increment
-            return [
-                '{}.jpg'.format(i)
-                for i in range(segment_start, segment_end + 1, increment)
-            ][:sample_duration]
+    annotations_by_video = {}
+    for video, image, label in annotations:
+        if video not in annotations_by_video:
+            annotations_by_video[video] = []
+        annotations_by_video[video].append((image, int(label.strip())))
+    
+    def split_into_segments(image_label_list):
+        num_images = len(image_label_list)
+        segments = []
+        for start_idx in range(0, num_images, sample_duration):
+            segment = image_label_list[start_idx:start_idx + sample_duration]
+            while len(segment) < sample_duration:
+                segment.append(segment[-1])
+            segments.append(segment)
+        return segments
+
+    segments_by_video = {
+        video: split_into_segments(annotations_by_video[video])
+        for video in annotations_by_video
+    }
+
     data = [
         {
-            'video_path': os.path.join(video_path, str(segment[0])),
-            'image_list': generate_image_list(segment[1], segment[2], sample_duration),
-            'class_index': class_indices[class_name]
+            'video_path': os.path.join(video_path, video),
+            'image_list': [
+                '{:04d}.jpg'.format(int(img))
+                for img, label in segment
+            ],
+            'class_index': max([label for img, label in segment])
         }
-        for class_name in class_indices
-        for segment, _ in annotations[class_name]
+        for video in segments_by_video
+        for segment in segments_by_video[video]
     ]
 
-    class_names = ['long', 'medium', 'close_up']
-    
+    class_names = [0, 1]
+
     return data, class_names
 
-
-class ShotScale(data.Dataset):
+class Commercials(data.Dataset):
     """
     Args:
         video_path (string): Directory containing videos.
-        annotation_path (string): Name of annotation file.
+        annotation_path (string): Path of annotation file.
         dataset (string): "val" or "test"
         spatial_transform (callable, optional): A function/transform that  takes in an PIL image
             and returns a transformed version. E.g, ``transforms.RandomCrop``
