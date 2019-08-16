@@ -9,10 +9,10 @@ import json
 from utils import AverageMeter
 
 
-def calculate_video_results(output_buffer, test_results, class_names, target):
+def calculate_video_results(output_buffer, test_results, class_names, target, opt):
     video_outputs = torch.stack(output_buffer)
     average_scores = torch.mean(video_outputs, dim=0)
-    sorted_scores, locs = torch.topk(average_scores, k=3)
+    sorted_scores, locs = torch.topk(average_scores, k=min(10, opt.n_classes))
 
     video_results = []
     for i in range(sorted_scores.size(0)):
@@ -48,7 +48,7 @@ def test(data_loader, model, opt, class_names):
         for j in range(outputs.size(0)):
             output_buffer.append(outputs[j].data.cpu())
             calculate_video_results(output_buffer, test_results, class_names,
-                                    targets[j].item())
+                                    targets[j].item(), opt)
             output_buffer = []
 
         if (i % 100) == 0:

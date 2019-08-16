@@ -27,13 +27,13 @@ def parse_opts():
         '--dataset',
         default='kinetics',
         type=str,
-        help='Used dataset (activitynet | kinetics | ucf101 | hmdb51 | shot_scale)')
+        help='Used dataset (activitynet | kinetics | ucf101 | hmdb51 | shot_scale | interviews | conversations | commercials)')
     parser.add_argument(
         '--n_classes',
         default=400,
         type=int,
         help=
-        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51 | shot_scale: 3)'
+        'Number of classes (activitynet: 200, kinetics: 400, ucf101: 101, hmdb51: 51 | shot_scale: 3 | interviews: 2 | conversations: 2 | commercials: 2)'
     )
     parser.add_argument(
         '--n_finetune_classes',
