@@ -40,6 +40,7 @@ def video_loader(video_dir_path, image_names, image_loader):
         if os.path.exists(image_path):
             video.append(image_loader(image_path))
         else:
+            print(image_path)
             return video
 
     return video

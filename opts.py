@@ -227,6 +227,9 @@ def parse_opts():
         help='ResNeXt cardinality')
     parser.add_argument(
         '--manual_seed', default=1, type=int, help='Manually set random seed')
+    parser.add_argument(
+        '--balance_classes', action='store_true',
+        help='If true, balance classes during training')
 
     args = parser.parse_args()
 

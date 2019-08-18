@@ -77,12 +77,44 @@ if __name__ == '__main__':
         target_transform = None
         training_data = get_training_set(opt, spatial_transform,
                                          temporal_transform, target_transform)
-        train_loader = torch.utils.data.DataLoader(
-            training_data,
-            batch_size=opt.batch_size,
-            shuffle=True,
-            num_workers=opt.n_threads,
-            pin_memory=True)
+        if opt.balance_classes:
+            def make_weights_for_balanced_classes(labels, nclasses):
+                count = [0] * nclasses
+                for label in labels:
+                    count[label] += 1
+                weight_per_class = [0.] * nclasses
+                N = float(sum(count))
+                for i in range(nclasses):
+                    weight_per_class[i] = N/float(count[i])
+                weight = [0] * len(labels)
+                for idx, label in enumerate(labels):
+                    weight[idx] = weight_per_class[label]
+                return weight
+
+            weights = make_weights_for_balanced_classes(
+                [
+                    datum['class_index']
+                    for datum in training_data.data
+                ],
+                opt.n_finetune_classes
+            )
+            weights = torch.DoubleTensor(weights)
+            sampler = torch.utils.data.sampler.WeightedRandomSampler(
+                weights, len(weights))
+            train_loader = torch.utils.data.DataLoader(
+                training_data,
+                batch_size=opt.batch_size,
+                sampler=sampler,
+                shuffle=False,
+                num_workers=opt.n_threads,
+                pin_memory=True)
+        else:
+            train_loader = torch.utils.data.DataLoader(
+                training_data,
+                batch_size=opt.batch_size,
+                shuffle=True,
+                num_workers=opt.n_threads,
+                pin_memory=True)
         train_logger = Logger(
             os.path.join(opt.result_path, 'train.log'),
             ['epoch', 'loss', 'acc', 'lr'])
