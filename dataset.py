@@ -5,11 +5,12 @@ from datasets.hmdb51 import HMDB51
 from datasets.shot_scale import ShotScale
 from datasets.interviews import Interviews
 from datasets.commercials import Commercials
+from datasets.dense_sample import DenseSample
 
 def get_training_set(opt, spatial_transform, temporal_transform,
                      target_transform):
     assert opt.dataset in ['kinetics', 'activitynet', 'ucf101', 'hmdb51', 'shot_scale',
-                            'interviews', 'commercials', 'conversations']
+                            'interviews', 'commercials', 'conversations', 'dense_sample']
 
     if opt.dataset == 'kinetics':
         training_data = Kinetics(
@@ -69,6 +70,14 @@ def get_training_set(opt, spatial_transform, temporal_transform,
             spatial_transform=spatial_transform,
             temporal_transform=temporal_transform,
             target_transform=target_transform)
+    elif opt.dataset == 'dense_sample':
+        training_data = DenseSample(
+            opt.video_path,
+            opt.annotation_path,
+            'val',
+            spatial_transform=spatial_transform,
+            temporal_transform=temporal_transform,
+            target_transform=target_transform)
 
     return training_data
 
@@ -76,7 +85,7 @@ def get_training_set(opt, spatial_transform, temporal_transform,
 def get_validation_set(opt, spatial_transform, temporal_transform,
                        target_transform):
     assert opt.dataset in ['kinetics', 'activitynet', 'ucf101', 'hmdb51', 'shot_scale',
-                            'interviews', 'commercials', 'conversations']
+                            'interviews', 'commercials', 'conversations', 'dense_sample']
 
     if opt.dataset == 'kinetics':
         validation_data = Kinetics(
@@ -145,13 +154,21 @@ def get_validation_set(opt, spatial_transform, temporal_transform,
             spatial_transform=spatial_transform,
             temporal_transform=temporal_transform,
             target_transform=target_transform)
+    elif opt.dataset == 'dense_sample':
+        validation_data = DenseSample(
+            opt.video_path,
+            opt.annotation_path,
+            'val',
+            spatial_transform=spatial_transform,
+            temporal_transform=temporal_transform,
+            target_transform=target_transform)
         
     return validation_data
 
 
 def get_test_set(opt, spatial_transform, temporal_transform, target_transform):
     assert opt.dataset in ['kinetics', 'activitynet', 'ucf101', 'hmdb51', 'shot_scale',
-                            'interviews', 'commercials', 'conversations']
+                            'interviews', 'commercials', 'conversations', 'dense_sample']
     assert opt.test_subset in ['val', 'test']
 
     if opt.test_subset == 'val':
@@ -219,6 +236,14 @@ def get_test_set(opt, spatial_transform, temporal_transform, target_transform):
             target_transform=target_transform)
     elif opt.dataset == 'commercials':
         test_data = Commercials(
+            opt.video_path,
+            opt.annotation_path,
+            'test',
+            spatial_transform=spatial_transform,
+            temporal_transform=temporal_transform,
+            target_transform=target_transform)
+    elif opt.dataset == 'dense_sample':
+        test_data = DenseSample(
             opt.video_path,
             opt.annotation_path,
             'test',
